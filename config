@@ -1,0 +1,183 @@
+set $mod Ctrl
+gaps inner 10
+smart_gaps on
+for_window [class=".*"] border pixel 4
+hide_edge_borders both
+client.focused #81a1c1 #81a1c1 #81a1c1 #81a1c1 #81a1c1
+client.focused_inactive #2e3440 #2e3440 #2e3440 #2e3440 #2e3440
+client.unfocused #2e3440 #2e3440 #2e3440 #2e3440 #2e3440
+client.urgent #bf616a #bf616a #bf616a #bf616a #bf616a
+client.placeholder #a3be8c #a3be8c #a3be8c #a3be8c #a3be8c
+client.background #2e3440
+focus_follows_mouse no
+font pango:DejaVu Sans Mono 11
+floating_modifier $mod
+bindsym $mod+Shift+r exec "bash -c \\"cd '/home/adam/.config/i3/' && go run 'main.go' func 0\\""
+bindsym $mod+Return exec "alacritty"
+bindsym $mod+Shift+q kill
+bindsym $mod+r exec "rofi -show drun"
+bindsym $mod+a focus left
+bindsym $mod+Left focus left
+# bindsym $mod+d focus right
+bindsym $mod+Right focus right
+bindsym $mod+w focus up
+bindsym $mod+Up focus up
+bindsym $mod+s focus down
+bindsym $mod+Down focus down
+bindsym $mod+Shift+a move left
+bindsym $mod+Shift+Left move left
+bindsym $mod+Shift+d move right
+bindsym $mod+Shift+Right move right
+bindsym $mod+Shift+w move up
+bindsym $mod+Shift+Up move up
+bindsym $mod+Shift+s move down
+bindsym $mod+Shift+Down move down
+bindsym $mod+h split horizontal
+bindsym $mod+v split vertical
+bindsym $mod+f fullscreen toggle
+workspace "1" output eDP1 eDP1
+bindsym $mod+1 workspace "1"
+bindsym $mod+Shift+1 move container to workspace "1"
+bindsym $mod+F1 workspace "1"
+bindsym $mod+Shift+F1 move container to workspace "1"
+workspace "2" output eDP1 eDP1
+bindsym $mod+2 workspace "2"
+bindsym $mod+Shift+2 move container to workspace "2"
+bindsym $mod+F2 workspace "2"
+bindsym $mod+Shift+F2 move container to workspace "2"
+workspace "3" output eDP1 eDP1
+bindsym $mod+3 workspace "3"
+bindsym $mod+Shift+3 move container to workspace "3"
+bindsym $mod+F3 workspace "3"
+bindsym $mod+Shift+F3 move container to workspace "3"
+workspace "4" output eDP1 eDP1
+bindsym $mod+4 workspace "4"
+bindsym $mod+Shift+4 move container to workspace "4"
+bindsym $mod+F4 workspace "4"
+bindsym $mod+Shift+F4 move container to workspace "4"
+workspace "5" output DP1 eDP1
+bindsym $mod+5 workspace "5"
+bindsym $mod+Shift+5 move container to workspace "5"
+bindsym $mod+F5 workspace "5"
+bindsym $mod+Shift+F5 move container to workspace "5"
+workspace "6" output DP1 eDP1
+bindsym $mod+6 workspace "6"
+bindsym $mod+Shift+6 move container to workspace "6"
+bindsym $mod+F6 workspace "6"
+bindsym $mod+Shift+F6 move container to workspace "6"
+workspace "7" output DP1 eDP1
+bindsym $mod+7 workspace "7"
+bindsym $mod+Shift+7 move container to workspace "7"
+bindsym $mod+F7 workspace "7"
+bindsym $mod+Shift+F7 move container to workspace "7"
+workspace "8" output DP1 eDP1
+bindsym $mod+8 workspace "8"
+bindsym $mod+Shift+8 move container to workspace "8"
+bindsym $mod+F8 workspace "8"
+bindsym $mod+Shift+F8 move container to workspace "8"
+workspace "9" output DP2 eDP1
+bindsym $mod+9 workspace "9"
+bindsym $mod+Shift+9 move container to workspace "9"
+bindsym $mod+F9 workspace "9"
+bindsym $mod+Shift+F9 move container to workspace "9"
+workspace "10" output DP2 eDP1
+bindsym $mod+0 workspace "10"
+bindsym $mod+Shift+0 move container to workspace "10"
+bindsym $mod+F10 workspace "10"
+bindsym $mod+Shift+F10 move container to workspace "10"
+workspace "11" output DP2 eDP1
+bindsym $mod+F11 workspace "11"
+bindsym $mod+Shift+F11 move container to workspace "11"
+workspace "12" output DP2 eDP1
+bindsym $mod+F12 workspace "12"
+bindsym $mod+Shift+F12 move container to workspace "12"
+bindsym $mod+Shift+e exec "i3-nagbar -t warning -m 'You pressed the exit shortcut. Do you really want to exit i3? This will end your X session.' -B 'Yes, exit i3' 'i3-msg exit'"
+bindsym $mod+Ctrl+w resize shrink height 10 px or 10 ppt
+bindsym $mod+Ctrl+Up resize shrink height 10 px or 10 ppt
+bindsym $mod+Ctrl+s resize grow height 10 px or 10 ppt
+bindsym $mod+Ctrl+Down resize grow height 10 px or 10 ppt
+bindsym $mod+Ctrl+a resize shrink width 10 px or 10 ppt
+bindsym $mod+Ctrl+Left resize shrink width 10 px or 10 ppt
+bindsym $mod+Ctrl+d resize grow width 10 px or 10 ppt
+bindsym $mod+Ctrl+Right resize grow width 10 px or 10 ppt
+bar {
+    position top
+    status_command $HOME/go/bin/i3gobar
+    tray_output primary
+    colors {
+        background #2e3440
+        statusline #d8dee9
+        separator #d8dee9
+        focused_workspace #81a1c1 #81a1c1 #2e3440
+        active_workspace #81a1c1 #2e3440 #d8dee9
+        inactive_workspace #2e3440 #2e3440 #d8dee9
+        urgent_workspace #bf616a #bf616a #2e3440
+    }
+    
+}
+for_window [instance="quake_term"] floating enabled
+bindsym $mod+grave exec "bash -c \\"cd '/home/adam/.config/i3/' && go run 'main.go' func 1\\""
+mode "quake zsh" {
+    bindsym Escape exec "bash -c \\"cd '/home/adam/.config/i3/' && go run 'main.go' func 2\\""
+    
+}
+for_window [instance="quake_term"] floating enabled
+bindsym $mod+j exec "bash -c \\"cd '/home/adam/.config/i3/' && go run 'main.go' func 3\\""
+mode "quake node" {
+    bindsym Escape exec "bash -c \\"cd '/home/adam/.config/i3/' && go run 'main.go' func 4\\""
+    
+}
+for_window [instance="quake_term"] floating enabled
+bindsym $mod+m exec "bash -c \\"cd '/home/adam/.config/i3/' && go run 'main.go' func 5\\""
+mode "quake math" {
+    bindsym Escape exec "bash -c \\"cd '/home/adam/.config/i3/' && go run 'main.go' func 6\\""
+    
+}
+for_window [instance="quake_term"] floating enabled
+bindsym $mod+k exec "bash -c \\"cd '/home/adam/.config/i3/' && go run 'main.go' func 7\\""
+mode "quake cal" {
+    bindsym Escape exec "bash -c \\"cd '/home/adam/.config/i3/' && go run 'main.go' func 8\\""
+    
+}
+bindsym $mod+e exec "emoji"
+# bindsym $mod+c exec "code"
+bindsym $mod+x exec "alacritty -e zsh -c \\"ranger\\""
+bindsym $mod+p exec "passmenu"
+bindsym $mod+Shift+p exec "maim -s --format=png /dev/stdout | xclip -selection clipboard -t image/png -i"
+bindsym $mod+u exec "cat ~/.config/adam/bookmarks | sort | rofi -dmenu -i -p sites | xargs -r surf"
+bindsym $mod+Shift+b exec "ln -sf \\"$(find ~/Pictures/wallpapers -type f | rofi -dmenu -i -p Wallpaper)\\" ~/Pictures/wallpaper && feh --bg-fill ~/Pictures/wallpaper"
+bindsym $mod+Shift+l exec "bash -c \\"cd '/home/adam/.config/i3/' && go run 'main.go' func 9\\""
+bindsym $mod+space exec "playerctl play-pause"
+bindsym $mod+comma exec "playerctl previous"
+bindsym $mod+period exec "playerctl next"
+bindsym $mod+minus exec "changeVolume 2dB- unmute"
+bindsym $mod+equal exec "changeVolume 2dB+ unmute"
+bindsym $mod+l exec "listAudioOutputs > ~/lao.log 2>&1"
+bindsym $mod+Shift+minus exec "changeBrightness -dec 10"
+bindsym $mod+Shift+equal exec "changeBrightness -inc 10"
+bindsym $mod+Shift+m exec "xmodmap /home/adam/.Xmodmap"
+exec_always --no-startup-id "feh --bg-fill \\"~/Pictures/wallpaper\\""
+exec_always "comp"
+exec_always "nm-applet &"
+exec "numlockx on &"
+exec "xrdb ~/.Xresources"
+exec "pasystray &"
+exec "mailspring -b &"
+exec "systemctl start --user polkit.service"
+exec "dunst"
+exec "lxsession"
+exec "nextcloud"
+exec "solaar"
+exec "xmodmap /home/adam/.Xmodmap"
+exec --no-startup-id "/usr/lib/gsd-xsettings"
+exec --no-startup-id "gnome-power-manager"
+exec --no-startup-id "gnome-flashback"
+bindsym $mod+b mode "Chord: $mod+b"
+mode "Chord: $mod+b" {
+    bindsym b mode "default"; exec "chromium"
+    bindsym g mode "default"; exec "google-chrome"
+    bindsym c mode "default"; exec "chromium"
+    bindsym f mode "default"; exec "firefox"
+    bindsym Escape mode "default"
+    
+}
