@@ -27,7 +27,7 @@ func Command(command []string) error {
 	}
 	runner, ok := runners[command[0]]
 	if !ok {
-		return nil
+		return fmt.Errorf("missing implementation for command %s", strings.Join(command, " "))
 	}
 	err := runner(command)
 	if err != nil {

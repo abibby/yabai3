@@ -3,6 +3,8 @@ package badparser
 import (
 	"os"
 	"strings"
+
+	"github.com/davecgh/go-spew/spew"
 )
 
 func ParseFile(file string) ([]*Mode, error) {
@@ -17,6 +19,7 @@ func Parse(src string) ([]*Mode, error) {
 	lines := strings.Split(src, "\n")
 	lines = trimWhitespace(lines)
 	lines = replaceVariables(lines)
+	// fmt.Println(strings.Join(lines, "\n"))
 	modeLines := getModes(lines)
 	modes := parseModes(modeLines)
 	return modes, nil
@@ -39,10 +42,12 @@ func replaceVariables(lines []string) []string {
 			variables[parts[1]] = parts[2]
 		}
 	}
+	spew.Dump(variables)
 	for i, line := range lines {
 		for name, value := range variables {
-			newLines[i] = strings.ReplaceAll(line, name, value)
+			line = strings.ReplaceAll(line, name, value)
 		}
+		newLines[i] = line
 	}
 	return newLines
 }

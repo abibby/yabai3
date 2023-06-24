@@ -1,4 +1,5 @@
 set $mod Ctrl
+set $ctrl Cmd
 gaps inner 10
 smart_gaps on
 for_window [class=".*"] border pixel 4
@@ -92,14 +93,14 @@ workspace "12" output DP2 eDP1
 bindsym $mod+F12 workspace "12"
 bindsym $mod+Shift+F12 move container to workspace "12"
 bindsym $mod+Shift+e exec "i3-nagbar -t warning -m 'You pressed the exit shortcut. Do you really want to exit i3? This will end your X session.' -B 'Yes, exit i3' 'i3-msg exit'"
-bindsym $mod+Ctrl+w resize shrink height 10 px or 10 ppt
-bindsym $mod+Ctrl+Up resize shrink height 10 px or 10 ppt
-bindsym $mod+Ctrl+s resize grow height 10 px or 10 ppt
-bindsym $mod+Ctrl+Down resize grow height 10 px or 10 ppt
-bindsym $mod+Ctrl+a resize shrink width 10 px or 10 ppt
-bindsym $mod+Ctrl+Left resize shrink width 10 px or 10 ppt
-bindsym $mod+Ctrl+d resize grow width 10 px or 10 ppt
-bindsym $mod+Ctrl+Right resize grow width 10 px or 10 ppt
+bindsym $mod+$ctrl+w resize shrink height 10 px or 10 ppt
+bindsym $mod+$ctrl+Up resize shrink height 10 px or 10 ppt
+bindsym $mod+$ctrl+s resize grow height 10 px or 10 ppt
+bindsym $mod+$ctrl+Down resize grow height 10 px or 10 ppt
+bindsym $mod+$ctrl+a resize shrink width 10 px or 10 ppt
+bindsym $mod+$ctrl+Left resize shrink width 10 px or 10 ppt
+bindsym $mod+$ctrl+d resize grow width 10 px or 10 ppt
+bindsym $mod+$ctrl+Right resize grow width 10 px or 10 ppt
 bar {
     position top
     status_command $HOME/go/bin/i3gobar

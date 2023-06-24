@@ -86,10 +86,11 @@ var keyMap = map[string]hotkey.Key{
 	"f19": hotkey.KeyF19,
 	"f20": hotkey.KeyF20,
 
+	"equal":  24,
+	"minus":  27,
 	"comma":  43,
 	"period": 47,
-
-	"function": 0x3F,
+	"grave":  50,
 }
 
 func keys(keysStr string) ([]hotkey.Modifier, hotkey.Key) {
@@ -97,12 +98,22 @@ func keys(keysStr string) ([]hotkey.Modifier, hotkey.Key) {
 	key := hotkey.Key(0)
 
 	keys := strings.Split(keysStr, "+")
+	modb := hotkey.Modifier(0)
 	for _, k := range keys {
+		found := false
 		if mod, ok := modMap[strings.ToLower(k)]; ok {
-			mods = append(mods, mod)
+			if modb&mod == 0 {
+				mods = append(mods, mod)
+				modb = modb | mod
+			}
+			found = true
 		}
 		if ke, ok := keyMap[strings.ToLower(k)]; ok {
 			key = ke
+			found = true
+		}
+		if !found {
+			log.Fatalf("invalid key or modifier %s", k)
 		}
 	}
 
