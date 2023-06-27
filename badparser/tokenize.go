@@ -30,12 +30,12 @@ func (t *tokens) Value() []string {
 	return t.argv
 }
 
-func tokenizeLine(str string) []string {
+func TokenizeLine(str string) []string {
 	argv := newTokens()
 	var quote rune
-	escape := false
-	for _, c := range str {
-		if escape {
+	escape := 0
+	for i, c := range str {
+		if escape >= 2 {
 			switch c {
 			case 'n':
 				argv.Push('\n')
@@ -44,6 +44,7 @@ func tokenizeLine(str string) []string {
 			default:
 				argv.Push(c)
 			}
+			escape = 0
 			continue
 		}
 		if quote != 0 {
@@ -53,7 +54,11 @@ func tokenizeLine(str string) []string {
 				continue
 			}
 			if c == '\\' {
-				escape = true
+				if escape == 1 {
+					escape = 2
+				} else if str[i+1] == '\\' {
+					escape = 1
+				}
 				continue
 			}
 			argv.Push(c)
@@ -79,5 +84,6 @@ func tokenizeLine(str string) []string {
 		}
 		argv.Push(c)
 	}
+
 	return argv.Value()
 }
