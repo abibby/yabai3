@@ -18,8 +18,8 @@ type BindSym struct {
 }
 
 type Workspace struct {
-	WorkspaceName string
-	Displays      []string
+	WorkspaceName  string
+	DisplayIndexes []string
 }
 type Borders struct {
 	Inner int
@@ -45,8 +45,8 @@ func parseModes(modeLines map[string][]string) []*Mode {
 				})
 			case "workspace":
 				windows = append(windows, &Workspace{
-					WorkspaceName: tokens[1],
-					Displays:      tokens[3:],
+					WorkspaceName:  tokens[1],
+					DisplayIndexes: tokens[3:],
 				})
 			case "gaps":
 				val, err := strconv.Atoi(tokens[2])

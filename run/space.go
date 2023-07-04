@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/abibby/yabai3/yabai"
+	"github.com/davecgh/go-spew/spew"
 )
 
 var (
@@ -36,20 +37,20 @@ func cache[T any](timeout time.Duration, fetch func() (T, error)) func() (T, err
 }
 
 var getDisplays = cache(time.Second, yabai.QueryDisplays)
-var getSpaces = cache(time.Second, yabai.QuerySpaces)
 
 var configuredSpaces = map[int]struct{}{}
 
-func getDisplay(id int) (*yabai.Display, error) {
+func getDisplay(index int) (*yabai.Display, error) {
 	displays, err := getDisplays()
 	if err != nil {
 		return nil, err
 	}
 	for _, d := range displays {
-		if d.ID == id {
+		if d.Index == index {
 			return d, nil
 		}
 	}
+	spew.Dump(index, displays)
 	return nil, ErrNoDisplay
 }
 func getDisplayFrom(displayIDs []string) (*yabai.Display, error) {
@@ -66,21 +67,9 @@ func getDisplayFrom(displayIDs []string) (*yabai.Display, error) {
 	}
 	return nil, ErrNoDisplay
 }
-func getSpace(id int) (*yabai.Space, error) {
-	spaces, err := getSpaces()
-	if err != nil {
-		return nil, err
-	}
-	for _, s := range spaces {
-		if s.ID == id {
-			return s, nil
-		}
-	}
-	return nil, ErrNoDisplay
-}
 
-func LabelSpace(displayIDs []string, name string) error {
-	d, err := getDisplayFrom(displayIDs)
+func LabelSpace(displayIndexes []string, name string) error {
+	d, err := getDisplayFrom(displayIndexes)
 	if err != nil {
 		return err
 	}

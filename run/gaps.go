@@ -11,7 +11,6 @@ func SetGaps(inner, outer int) error {
 	if err != nil {
 		return err
 	}
-
 	err = yabai.Yabai("config", "top_padding", fmt.Sprint(outer))
 	if err != nil {
 		return err

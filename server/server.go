@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 
 	"github.com/abibby/yabai3/badparser"
@@ -32,8 +31,9 @@ type CommandResult struct {
 
 const PORT = 3141
 
-func Serve(changeMode func(mode string) error) {
-	http.HandleFunc("/command", func(w http.ResponseWriter, r *http.Request) {
+func Serve(changeMode func(mode string) error, restart func() error) func() error {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/command", func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 
 		b, err := io.ReadAll(r.Body)
@@ -46,7 +46,7 @@ func Serve(changeMode func(mode string) error) {
 
 		commands := badparser.SplitCommands(badparser.TokenizeLine(string(b)))
 		for _, command := range commands {
-			err := run.Command(command, changeMode)
+			err := run.Command(command, changeMode, restart)
 			var msgErr *I3msgError
 			if err != nil {
 				msgErr = &I3msgError{
@@ -62,8 +62,16 @@ func Serve(changeMode func(mode string) error) {
 		}
 		json.NewEncoder(w).Encode(results)
 	})
-	log.Print("server running")
-	http.ListenAndServe(fmt.Sprintf(":%d", PORT), nil)
+	server := &http.Server{
+		Addr:    fmt.Sprintf(":%d", PORT),
+		Handler: mux,
+	}
+
+	go server.ListenAndServe()
+
+	return func() error {
+		return server.Close()
+	}
 }
 
 func sendError(w http.ResponseWriter, err error) {

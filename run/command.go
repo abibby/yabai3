@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"syscall"
 
 	"github.com/abibby/yabai3/yabai"
 	"github.com/mattn/go-shellwords"
@@ -21,7 +22,7 @@ var directionMap = map[string]string{
 	"right": "east",
 }
 
-func Command(command []string, changeMode func(string) error) error {
+func Command(command []string, changeMode func(string) error, restart func() error) error {
 	runners := map[string]func(c []string) error{
 		"exec":       runExec,
 		"focus":      runFocus,
@@ -30,6 +31,8 @@ func Command(command []string, changeMode func(string) error) error {
 		"workspace":  runWorkspace,
 		"mode":       runMode(changeMode),
 		"fullscreen": runFullscreen,
+		"restart":    runRestart(restart),
+		"kill":       runKill,
 	}
 	runner, ok := runners[command[0]]
 	if !ok {
@@ -47,13 +50,13 @@ func runExec(c []string) error {
 	args, err := shellwords.Parse(cmd)
 	if err == nil {
 		b, err := exec.Command("open", append([]string{"-a", args[0], "-n", "--args"}, args[1:]...)...).CombinedOutput()
-		if err == nil || string(b) != fmt.Sprintf("Unable to find application named '%s'\n", cmd) {
-			return err
+		if err == nil || string(b) != fmt.Sprintf("Unable to find application named '%s'\n", args[0]) {
+			return fmt.Errorf("exec failed with message: \"%s\": %w", b, err)
 		}
 	}
-	err = exec.Command("sh", "-c", cmd).Run()
+	b, err := exec.Command("sh", "-c", cmd).CombinedOutput()
 	if err != nil {
-		return err
+		return fmt.Errorf("exec failed with message: \"%s\": %w", b, err)
 	}
 
 	return nil
@@ -118,7 +121,7 @@ func runMove(c []string) error {
 		return Command([]string{
 			"move", "container", "to", "workspace", label, ";",
 			"workspace", label,
-		}, nil)
+		}, nil, nil)
 	}
 
 	if !slices.Equal([]string{"move", "container", "to", "workspace"}, c[:4]) {
@@ -160,6 +163,19 @@ func runFullscreen(c []string) error {
 		return yabai.Yabai("window", "--toggle", "zoom-fullscreen")
 	}
 	return ErrUnknownCommand
+}
+
+func runRestart(restart func() error) func(c []string) error {
+	return func(c []string) error {
+		return restart()
+	}
+}
+func runKill(c []string) error {
+	w, err := yabai.QueryActiveWindow()
+	if err != nil {
+		return err
+	}
+	return syscall.Kill(w.PID, syscall.SIGTERM)
 }
 
 func getSpaceInDirection(direction string) (*yabai.Space, error) {
