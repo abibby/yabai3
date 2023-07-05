@@ -73,7 +73,7 @@ func parseModes(modeLines map[string][]string) []*Mode {
 }
 
 func SplitCommands(tokens []string) [][]string {
-	commands := [][]string{[]string{}}
+	commands := [][]string{{}}
 	i := 0
 	for _, t := range tokens {
 		if t == ";" {

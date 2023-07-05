@@ -50,7 +50,10 @@ func runExec(c []string) error {
 	args, err := shellwords.Parse(cmd)
 	if err == nil {
 		b, err := exec.Command("open", append([]string{"-a", args[0], "-n", "--args"}, args[1:]...)...).CombinedOutput()
-		if err == nil || string(b) != fmt.Sprintf("Unable to find application named '%s'\n", args[0]) {
+		if err == nil {
+			return nil
+		}
+		if string(b) != fmt.Sprintf("Unable to find application named '%s'\n", args[0]) {
 			return fmt.Errorf("exec failed with message: \"%s\": %w", b, err)
 		}
 	}
