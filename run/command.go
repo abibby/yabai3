@@ -106,31 +106,38 @@ func runResize(c []string) error {
 }
 func runMove(c []string) error {
 	direction, ok := directionMap[c[1]]
-	if ok {
-		err := yabai.Yabai("window", "--swap", direction)
-		if err == nil {
-			return nil
+	if !ok {
+		if !slices.Equal([]string{"move", "container", "to", "workspace"}, c[:4]) {
+			return ErrUnknownCommand
 		}
-		nextSpace, err := getSpaceInDirection(direction)
-		if err != nil {
-			return err
-		}
-
-		label := nextSpace.Label
-		if label == "" {
-			label = fmt.Sprint(nextSpace.Index)
-		}
-
-		return Command([]string{
-			"move", "container", "to", "workspace", label, ";",
-			"workspace", label,
-		}, nil, nil)
+		return yabai.Yabai("window", "--space", c[4])
 	}
 
-	if !slices.Equal([]string{"move", "container", "to", "workspace"}, c[:4]) {
-		return ErrUnknownCommand
+	err := yabai.Yabai("window", "--swap", direction)
+	if err == nil {
+		return nil
 	}
-	return yabai.Yabai("window", "--space", c[4])
+
+	window, err := yabai.QueryActiveWindow()
+	if err != nil {
+		return err
+	}
+	nextSpace, err := getSpaceInDirection(direction)
+	if err != nil {
+		return err
+	}
+
+	label := nextSpace.Label
+	if label == "" {
+		label = fmt.Sprint(nextSpace.Index)
+	}
+
+	err = yabai.Yabai("window", "--space", label)
+	if err != nil {
+		return err
+	}
+
+	return yabai.Yabai("window", "--focus", fmt.Sprint(window.ID))
 }
 
 func runFocus(c []string) error {
