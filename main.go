@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"path"
+	"time"
 
 	"github.com/abibby/yabai3/badparser"
 	"github.com/abibby/yabai3/run"
@@ -69,6 +71,12 @@ func main() {
 			}
 
 			restart := func() error {
+				err := exec.Command("yabai", "--restart-service").Run()
+				if err != nil {
+					return fmt.Errorf("faild to restart yabai: %w", err)
+				}
+				log.Print("restarted yabai service")
+				time.Sleep(time.Millisecond * 500)
 				done <- Restart
 				return nil
 			}
