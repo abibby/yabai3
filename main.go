@@ -76,7 +76,7 @@ func main() {
 					return fmt.Errorf("faild to restart yabai: %w", err)
 				}
 				log.Print("restarted yabai service")
-				time.Sleep(time.Millisecond * 500)
+				time.Sleep(time.Second * 5)
 				done <- Restart
 				return nil
 			}
