@@ -29,11 +29,6 @@ func main() {
 
 	f := fmt.Sprintf("%s ALL=(root) NOPASSWD: sha256:%s --load-sa", u.Username, sha)
 
-	// err = os.WriteFile("/private/etc/sudoers.d/yabai", []byte(f), 0644)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
 	cmd := exec.Command("sudo", "tee", "/private/etc/sudoers.d/yabai")
 	if err != nil {
 		log.Fatal(err)
