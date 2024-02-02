@@ -151,12 +151,12 @@ func runFocus(c []string) error {
 		return nil
 	}
 
-	space, err := getSpaceInDirection(direction)
+	display, err := getDisplayInDirection(direction)
 	if err != nil {
 		return err
 	}
 
-	return yabai.Yabai("space", "--focus", fmt.Sprint(space.Index))
+	return yabai.Yabai("display", "--focus", fmt.Sprint(display.Index))
 }
 
 func runWorkspace(c []string) error {
@@ -199,7 +199,7 @@ func findAngleBetween(d1, d2 *yabai.Display) float64 {
 	}
 	return calc_angle * (180 / math.Pi)
 }
-func getSpaceInDirection(direction string) (*yabai.Space, error) {
+func getDisplayInDirection(direction string) (*yabai.Display, error) {
 	spaces, err := yabai.QuerySpaces()
 	if err != nil {
 		return nil, err
@@ -209,7 +209,6 @@ func getSpaceInDirection(direction string) (*yabai.Space, error) {
 		return nil, err
 	}
 	var activeSpace *yabai.Space
-	var nextSpace *yabai.Space
 	var activeDisplay *yabai.Display
 	var nextDisplay *yabai.Display
 
@@ -258,7 +257,18 @@ func getSpaceInDirection(direction string) (*yabai.Space, error) {
 	if nextDisplay == nil {
 		return nil, fmt.Errorf("no display %s of current display", direction)
 	}
-
+	return nextDisplay, nil
+}
+func getSpaceInDirection(direction string) (*yabai.Space, error) {
+	var nextSpace *yabai.Space
+	spaces, err := yabai.QuerySpaces()
+	if err != nil {
+		return nil, err
+	}
+	nextDisplay, err := getDisplayInDirection(direction)
+	if err != nil {
+		return nil, err
+	}
 	for _, s := range spaces {
 		if s.IsVisible && s.DisplayIndex == nextDisplay.Index {
 			nextSpace = s
