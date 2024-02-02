@@ -3,6 +3,7 @@ package run
 import (
 	"errors"
 	"fmt"
+	"math"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -187,7 +188,17 @@ func runKill(c []string) error {
 	}
 	return syscall.Kill(w.PID, syscall.SIGTERM)
 }
-
+func findAngleBetween(d1, d2 *yabai.Display) float64 {
+	x1 := d1.Frame.X + d1.Frame.Width/2
+	y1 := d1.Frame.Y + d1.Frame.Height/2
+	x2 := d2.Frame.X + d2.Frame.Width/2
+	y2 := d2.Frame.Y + d2.Frame.Height/2
+	calc_angle := math.Atan2(float64(y2-y1), float64(x2-x1))
+	if calc_angle < 0 {
+		calc_angle += math.Pi * 2
+	}
+	return calc_angle * (180 / math.Pi)
+}
 func getSpaceInDirection(direction string) (*yabai.Space, error) {
 	spaces, err := yabai.QuerySpaces()
 	if err != nil {
@@ -216,26 +227,32 @@ func getSpaceInDirection(direction string) (*yabai.Space, error) {
 		}
 	}
 	for _, d := range displays {
-		if d.Frame.Y == activeDisplay.Frame.Y {
-			if direction == "east" && d.Frame.X == (activeDisplay.Frame.X+activeDisplay.Frame.Width) {
-				nextDisplay = d
-				break
-			}
-			if direction == "west" && d.Frame.X == (activeDisplay.Frame.X-activeDisplay.Frame.Width) {
-				nextDisplay = d
-				break
-			}
+		if d.ID == activeDisplay.ID {
+			continue
 		}
-		if d.Frame.X == activeDisplay.Frame.X {
-			if direction == "north" && d.Frame.Y == (activeDisplay.Frame.Y+activeDisplay.Frame.Height) {
-				nextDisplay = d
-				break
-			}
-			if direction == "south" && d.Frame.Y == (activeDisplay.Frame.Y-activeDisplay.Frame.Height) {
-				nextDisplay = d
-				break
-			}
+		// TODO: look into using the closet display within an angle range
+		// angle := findAngleBetween(activeDisplay, d)
+		// if d.Frame.Y == activeDisplay.Frame.Y {
+		if direction == "east" && d.Frame.X == (activeDisplay.Frame.X+activeDisplay.Frame.Width) {
+			nextDisplay = d
+			break
 		}
+
+		if direction == "west" && activeDisplay.Frame.X == (d.Frame.X+d.Frame.Width) {
+			nextDisplay = d
+			break
+		}
+		// }
+		// if d.Frame.X == activeDisplay.Frame.X {
+		if direction == "north" && d.Frame.Y == (activeDisplay.Frame.Y+activeDisplay.Frame.Height) {
+			nextDisplay = d
+			break
+		}
+		if direction == "south" && activeDisplay.Frame.Y == (d.Frame.Y+d.Frame.Height) {
+			nextDisplay = d
+			break
+		}
+		// }
 	}
 
 	if nextDisplay == nil {
