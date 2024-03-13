@@ -113,10 +113,16 @@ func main() {
 				}
 			}
 
-			modes[activeMode].Register()
+			err = modes[activeMode].Register()
+			if err != nil {
+				log.Fatalf("failed to register bindings: %v", err)
+			}
 			log.Print("listening for key bindings")
 			state = <-done
-			modes[activeMode].Unregister()
+			err = modes[activeMode].Unregister()
+			if err != nil {
+				log.Fatalf("failed to unregister bindings: %v", err)
+			}
 			stopServer()
 		}
 	})
