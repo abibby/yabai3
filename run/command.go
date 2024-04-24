@@ -193,11 +193,11 @@ func findAngleBetween(d1, d2 *yabai.Display) float64 {
 	y1 := d1.Frame.Y + d1.Frame.Height/2
 	x2 := d2.Frame.X + d2.Frame.Width/2
 	y2 := d2.Frame.Y + d2.Frame.Height/2
-	calc_angle := math.Atan2(float64(y2-y1), float64(x2-x1))
-	if calc_angle < 0 {
-		calc_angle += math.Pi * 2
+	calcAngle := math.Atan2(float64(y2-y1), float64(x2-x1))
+	if calcAngle < 0 {
+		calcAngle += math.Pi * 2
 	}
-	return calc_angle * (180 / math.Pi)
+	return calcAngle * (180 / math.Pi)
 }
 func getDisplayInDirection(direction string) (*yabai.Display, error) {
 	spaces, err := yabai.QuerySpaces()

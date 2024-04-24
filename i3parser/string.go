@@ -22,7 +22,7 @@ func ParseString(parent parser.Node, block *parser.Reader) (parser.Node, error) 
 	tx := block.BeginTx()
 	defer tx.Rollback()
 
-	b := block.ReadByte()
+	b := block.ReadNextByte()
 	if b != '"' {
 		return nil, parser.NewError(block, fmt.Errorf("expected \" recieved %c", b))
 	}
@@ -31,7 +31,7 @@ func ParseString(parent parser.Node, block *parser.Reader) (parser.Node, error) 
 	quote := b
 	escape := false
 	for {
-		b = block.ReadByte()
+		b = block.ReadNextByte()
 		if escape {
 			result += string(b)
 		}

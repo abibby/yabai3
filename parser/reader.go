@@ -83,7 +83,7 @@ func (r *Reader) Peak() byte {
 	return r.source[r.cursor]
 }
 
-func (r *Reader) ReadByte() byte {
+func (r *Reader) ReadNextByte() byte {
 	b := r.Peak()
 	r.Advance(1)
 	return b

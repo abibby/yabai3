@@ -28,7 +28,7 @@ func ParseConditions(parent parser.Node, block *parser.Reader) (parser.Node, err
 	tx := block.BeginTx()
 	defer tx.Rollback()
 
-	b := block.ReadByte()
+	b := block.ReadNextByte()
 
 	if b != '[' {
 		return nil, parser.NewError(block, fmt.Errorf("expected [ received %c", b))
@@ -43,7 +43,7 @@ func ParseConditions(parent parser.Node, block *parser.Reader) (parser.Node, err
 
 		block.SkipWhitespace()
 
-		b = block.ReadByte()
+		b = block.ReadNextByte()
 		if b != '=' {
 			return nil, parser.NewError(block, fmt.Errorf("expected = received %c", b))
 		}

@@ -24,7 +24,7 @@ func ParseIdentifier(parent parser.Node, block *parser.Reader) (parser.Node, err
 
 	id := ""
 	for isIdentifierCharacter(block.Peak()) {
-		id += string(block.ReadByte())
+		id += string(block.ReadNextByte())
 	}
 	if len(id) == 0 {
 		return nil, parser.NewError(block, fmt.Errorf("invalid identifier"))
