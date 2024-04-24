@@ -10,6 +10,7 @@ type Mode struct {
 	BindSym    []*BindSym
 	Workspaces []*Workspace
 	Borders    *Borders
+	Bar        *Bar
 }
 
 type BindSym struct {
@@ -26,17 +27,23 @@ type Borders struct {
 	Outer int
 }
 
+type Bar struct {
+	StatusCommand string
+}
+
 func parseModes(modeLines map[string][]string) []*Mode {
 	modes := []*Mode{}
 	for name, lines := range modeLines {
 		bindSym := []*BindSym{}
 		windows := []*Workspace{}
 		borders := &Borders{}
+		var bar *Bar
 		for _, line := range lines {
 			tokens := TokenizeLine(line)
 			if len(tokens) == 0 {
 				continue
 			}
+
 			switch tokens[0] {
 			case "bindsym":
 				bindSym = append(bindSym, &BindSym{
@@ -60,6 +67,8 @@ func parseModes(modeLines map[string][]string) []*Mode {
 				case "outer":
 					borders.Outer = val
 				}
+			case "status_command":
+				bar = &Bar{StatusCommand: tokens[1]}
 			}
 		}
 		modes = append(modes, &Mode{
@@ -67,6 +76,7 @@ func parseModes(modeLines map[string][]string) []*Mode {
 			BindSym:    bindSym,
 			Workspaces: windows,
 			Borders:    borders,
+			Bar:        bar,
 		})
 	}
 	return modes

@@ -113,7 +113,7 @@ func keys(keysStr string) ([]hotkey.Modifier, hotkey.Key) {
 			found = true
 		}
 		if !found {
-			log.Fatalf("invalid key or modifier %s", k)
+			log.Fatalf("invalid key or modifier %s in %s", k, keysStr)
 		}
 	}
 

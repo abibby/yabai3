@@ -41,8 +41,16 @@ func TestTokenizeLine(t *testing.T) {
 		},
 		{
 			line:     `foo "bar\\"" baz`,
-			expected: []string{"foo", "bar\"", "baz"},
+			expected: []string{"foo", `bar"`, "baz"},
 		},
+		// {
+		// 	line:     `"\\\\""`,
+		// 	expected: []string{`\"`},
+		// },
+		// {
+		// 	line:     `"\\ "`,
+		// 	expected: []string{`\ `},
+		// },
 	}
 	for _, tc := range testCases {
 		t.Run(tc.line, func(t *testing.T) {
