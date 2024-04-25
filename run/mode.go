@@ -1,6 +1,7 @@
 package run
 
 import (
+	"errors"
 	"fmt"
 
 	"golang.design/x/hotkey"
@@ -28,10 +29,14 @@ func (m *Mode) Register() error {
 	for i, hk := range m.hotkeys {
 		err := hk.Register()
 		if err != nil {
+			registerErr := fmt.Errorf("key listener register %s: %w", hk, err)
 			for _, hk2 := range m.hotkeys[:i] {
-				hk2.Unregister()
+				err := hk2.Unregister()
+				if err != nil {
+					return errors.Join(err, registerErr)
+				}
 			}
-			return fmt.Errorf("%s: %w", hk, err)
+			return registerErr
 		}
 		go func(hk *hotkey.Hotkey) {
 			for e := range hk.Keydown() {
