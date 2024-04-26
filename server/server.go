@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 
 	"github.com/abibby/yabai3/badparser"
@@ -60,14 +61,22 @@ func Serve(changeMode func(mode string) error, restart func() error) func() erro
 			})
 
 		}
-		json.NewEncoder(w).Encode(results)
+		err = json.NewEncoder(w).Encode(results)
+		if err != nil {
+			log.Print(err)
+		}
 	})
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%d", PORT),
 		Handler: mux,
 	}
 
-	go server.ListenAndServe()
+	go func() {
+		err := server.ListenAndServe()
+		if err != nil {
+			log.Printf("i3-msg server: %v", err)
+		}
+	}()
 
 	return func() error {
 		return server.Close()
@@ -75,7 +84,7 @@ func Serve(changeMode func(mode string) error, restart func() error) func() erro
 }
 
 func sendError(w http.ResponseWriter, err error) {
-	json.NewEncoder(w).Encode([]*CommandResult{
+	jsonErr := json.NewEncoder(w).Encode([]*CommandResult{
 		{
 			Success: false,
 			I3msgError: &I3msgError{
@@ -84,4 +93,7 @@ func sendError(w http.ResponseWriter, err error) {
 			},
 		},
 	})
+	if jsonErr != nil {
+		log.Printf("i3-msg server: %v", jsonErr)
+	}
 }

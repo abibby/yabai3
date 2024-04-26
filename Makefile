@@ -88,7 +88,7 @@ push: tidy audit no-dirty
 
 ## install: install the application
 .PHONY: install
-install: confirm tidy audit no-dirty
+install: confirm tidy audit
 	go build -ldflags='-s' -o=/tmp/bin/linux_amd64/${BINARY_NAME} ${MAIN_PACKAGE_PATH}
 	cp /tmp/bin/linux_amd64/${BINARY_NAME} yabai3.app/Contents/MacOS
 	cp -r yabai3.app /Applications/yabai3.app
