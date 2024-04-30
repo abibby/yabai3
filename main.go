@@ -10,6 +10,8 @@ import (
 	"path"
 	"time"
 
+	// _ "net/http/pprof"
+
 	"github.com/abibby/yabai3/badparser"
 	"github.com/abibby/yabai3/bar"
 	"github.com/abibby/yabai3/run"
@@ -32,7 +34,14 @@ var (
 	ErrRestart = errors.New("restart")
 )
 
+// func init() {
+// 	go func() {
+// 		http.ListenAndServe(":1234", nil)
+// 	}()
+// }
+
 func main() {
+	// onReady()
 	systray.Run(onReady, onExit)
 }
 
@@ -46,11 +55,12 @@ func onReady() {
 	mRestart := systray.AddMenuItem("Restart", "Restart yabai and yabai3")
 	systray.AddSeparator()
 
-	mainthread.Init(func() {
+	ctx := context.Background()
 
-		var cause error
-		for cause != ErrStop {
-			ctx, cancel := context.WithCancelCause(context.Background())
+	go mainthread.Init(func() {
+		cause := ErrRestart
+		for cause == ErrRestart {
+			ctx, cancel := context.WithCancelCause(ctx)
 			go func() {
 				select {
 				case <-ctx.Done():
@@ -67,6 +77,9 @@ func onReady() {
 				panic(err)
 			}
 			cause = context.Cause(ctx)
+		}
+		if cause != ErrStop {
+			panic(cause)
 		}
 	})
 }

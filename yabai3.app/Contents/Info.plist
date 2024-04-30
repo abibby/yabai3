@@ -5,7 +5,7 @@
     <key>CFBundleGetInfoString</key>
     <string>Yabai3</string>
     <key>CFBundleExecutable</key>
-    <string>yabai3</string>
+    <string>run.sh</string>
     <key>CFBundleIdentifier</key>
     <string>io.bibby.yabai3</string>
     <key>CFBundleName</key>

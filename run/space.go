@@ -2,12 +2,11 @@ package run
 
 import (
 	"fmt"
-	"strconv"
+	"slices"
 	"sync"
 	"time"
 
 	"github.com/abibby/yabai3/yabai"
-	"github.com/davecgh/go-spew/spew"
 )
 
 var (
@@ -38,7 +37,7 @@ func cache[T any](timeout time.Duration, fetch func() (T, error)) func() (T, err
 
 var getDisplays = cache(time.Second, yabai.QueryDisplays)
 
-var configuredSpaces = map[int]struct{}{}
+// var configuredSpaces = map[int]struct{}{}
 
 func getDisplay(index int) (*yabai.Display, error) {
 	displays, err := getDisplays()
@@ -50,36 +49,54 @@ func getDisplay(index int) (*yabai.Display, error) {
 			return d, nil
 		}
 	}
-	spew.Dump(index, displays)
-	return nil, ErrNoDisplay
-}
-func getDisplayFrom(displayIDs []string) (*yabai.Display, error) {
-	for _, strID := range displayIDs {
-		id, err := strconv.Atoi(strID)
-		if err != nil {
-			continue
-		}
-		d, err := getDisplay(id)
-		if err == ErrNoDisplay {
-			continue
-		}
-		return d, err
-	}
+	// spew.Dump(index, displays)
 	return nil, ErrNoDisplay
 }
 
-func LabelSpace(displayIndexes []string, name string) error {
-	d, err := getDisplayFrom(displayIndexes)
+func getDisplayFrom(displayNames []string) (*yabai.Display, error) {
+	displays, err := getDisplays()
+	if err != nil {
+		return nil, err
+	}
+
+	slices.SortFunc(displays, func(a, b *yabai.Display) int {
+		return int(a.Frame.X) - int(b.Frame.X)
+	})
+
+	for _, name := range displayNames {
+		switch name {
+		case "left":
+			return displays[0], nil
+		case "center":
+			return displays[len(displays)/2], nil
+		case "right":
+			return displays[len(displays)-1], nil
+		}
+	}
+
+	return nil, ErrNoDisplay
+}
+
+func LabelSpace(displayNames []string, name string) error {
+	d, err := getDisplayFrom(displayNames)
 	if err != nil {
 		return err
 	}
+	spaces, err := yabai.QuerySpaces()
+	if err != nil {
+		return err
+	}
+
 	for _, spaceIndex := range d.SpaceIndexes {
-		_, ok := configuredSpaces[spaceIndex]
-		if ok {
-			continue
+		for _, s := range spaces {
+			if s.Label == name {
+				return nil
+			}
+			if s.Label == "" {
+				fmt.Printf("LabelSpace(%#v, %#v)\n", displayNames, name)
+				return yabai.Yabai("space", fmt.Sprint(spaceIndex), "--label", name)
+			}
 		}
-		configuredSpaces[spaceIndex] = struct{}{}
-		return yabai.Yabai("space", fmt.Sprint(spaceIndex), "--label", name)
 	}
 	return nil
 }

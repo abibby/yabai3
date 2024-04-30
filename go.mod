@@ -5,7 +5,6 @@ go 1.21
 toolchain go1.22.1
 
 require (
-	github.com/davecgh/go-spew v1.1.1
 	github.com/getlantern/systray v1.2.2
 	github.com/mattn/go-shellwords v1.0.12
 	github.com/microcosm-cc/bluemonday v1.0.26
@@ -16,6 +15,7 @@ require (
 
 require (
 	github.com/aymerick/douceur v0.2.0 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/getlantern/context v0.0.0-20220418194847-3d5e7a086201 // indirect
 	github.com/getlantern/errors v1.0.4 // indirect
 	github.com/getlantern/golog v0.0.0-20230503153817-8e72de7e0a65 // indirect

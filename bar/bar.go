@@ -3,9 +3,11 @@ package bar
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
+	"os/exec"
 	"slices"
 	"strings"
 
@@ -81,13 +83,17 @@ type Click struct {
 var menuItems = []*systray.MenuItem{}
 
 func Run(ctx context.Context, command string) {
-	stdin, stdout, cmd := startCommand(command)
+	stdin, stdout, cmd := StartCommand(ctx, command)
 	defer stdin.Close()
 	defer stdout.Close()
 
 	defer func() {
 		err := cmd.Wait()
-		if err != nil {
+		exitErr := &exec.ExitError{}
+		if errors.As(err, &exitErr) {
+			log.Printf("bar exited with code: %d", exitErr.ExitCode())
+			return
+		} else if err != nil {
 			log.Fatalf("failed to stop bar: %v", err)
 		}
 	}()
@@ -116,6 +122,7 @@ func Run(ctx context.Context, command string) {
 		case bar = <-updates:
 			status := barUpdate(bar, clicks)
 			if lastStatus != status {
+				log.Printf("bar update %s\n", status)
 				systray.SetTitle(status)
 				lastStatus = status
 			}

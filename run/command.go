@@ -85,12 +85,14 @@ func runResize(c []string) error {
 		vertial = 1
 	}
 
+	scale := 10
+
 	amount, err := strconv.Atoi(parts[2])
 	if err != nil {
 		return err
 	}
 
-	err = yabai.Yabai("window", "--resize", fmt.Sprintf("%s:%d:%d", direction, amount*horizontal, amount*vertial))
+	err = yabai.Yabai("window", "--resize", fmt.Sprintf("%s:%d:%d", direction, amount*horizontal*scale, amount*vertial*scale))
 	if err == nil {
 		return nil
 	}

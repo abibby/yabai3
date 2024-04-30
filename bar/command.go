@@ -1,14 +1,15 @@
 package bar
 
 import (
+	"context"
 	"io"
 	"log"
 	"os"
 	"os/exec"
 )
 
-func startCommand(command string) (io.WriteCloser, io.ReadCloser, *exec.Cmd) {
-	cmd := exec.Command("sh", "-c", command)
+func StartCommand(ctx context.Context, command string) (io.WriteCloser, io.ReadCloser, *exec.Cmd) {
+	cmd := exec.CommandContext(ctx, "sh", "-c", command)
 
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
