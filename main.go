@@ -49,6 +49,7 @@ func onExit() {
 	// clean up here
 }
 func onReady() {
+	log.Print("Starting yabai3 0.1.0")
 	systray.SetTitle("yabai3")
 	systray.SetTooltip("yabai3")
 	mQuit := systray.AddMenuItem("Quit", "Quit yabai3")
@@ -96,7 +97,10 @@ func do(ctx context.Context, cancel context.CancelCauseFunc) error {
 	activeMode := "default"
 	modes := map[string]*run.Mode{}
 
+	i3MsgServer := server.New()
+
 	changeMode := func(mode string) error {
+		i3MsgServer.ModeChanged(mode)
 		newMode, ok := modes[mode]
 		if !ok {
 			return fmt.Errorf("no mode %s", mode)
@@ -121,7 +125,7 @@ func do(ctx context.Context, cancel context.CancelCauseFunc) error {
 		return nil
 	}
 
-	stopServer := server.Serve(changeMode, restart)
+	i3MsgServer.Start(ctx, changeMode, restart)
 
 	for _, mode := range modeAST {
 		m := run.NewMode()
@@ -167,7 +171,7 @@ func do(ctx context.Context, cancel context.CancelCauseFunc) error {
 		return fmt.Errorf("failed to unregister bindings: %w", err)
 	}
 
-	err = stopServer()
+	err = i3MsgServer.Close()
 	if err != nil {
 		return fmt.Errorf("failed to unregister bindings: %w", err)
 	}

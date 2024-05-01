@@ -1,13 +1,15 @@
 module github.com/abibby/yabai3
 
-go 1.21
+go 1.22
 
-toolchain go1.22.1
+toolchain go1.22.2
 
 require (
+	github.com/abibby/salusa v0.11.1
 	github.com/getlantern/systray v1.2.2
 	github.com/mattn/go-shellwords v1.0.12
 	github.com/microcosm-cc/bluemonday v1.0.26
+	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.9.0
 	golang.design/x/hotkey v0.4.1
 	golang.org/x/exp v0.0.0-20240416160154-fe59bbe5cc7f

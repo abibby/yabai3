@@ -1,16 +1,16 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
-	"net/http"
+	"net"
 	"os"
 	"strings"
 
 	"github.com/abibby/yabai3/server"
+	"github.com/spf13/pflag"
 )
 
 func check(err error) {
@@ -33,19 +33,30 @@ func check(err error) {
 }
 
 func main() {
-	args := os.Args[1:]
+	msgType := pflag.StringP("type", "t", "command", "Send ipc message.")
+	quiet := pflag.BoolP("quiet", "q", false, "Only send ipc message and suppress the output of the response.")
+	monitor := pflag.BoolP("monitor", "m", false, "Only send ipc message and suppress the output of the response.")
+	pflag.Parse()
+
+	args := pflag.Args()
 	if len(args) == 0 {
 		fmt.Println("i3-msg <command...>")
 		return
 	}
-	resp, err := http.Post(
-		fmt.Sprintf("http://localhost:%d/command", server.PORT),
-		"application/json",
-		bytes.NewBufferString(strings.Join(args, " ")),
-	)
+	conn, err := net.Dial("tcp4", fmt.Sprintf("127.0.0.1:%d", server.PORT))
 	check(err)
-	defer resp.Body.Close()
 
-	_, err = io.Copy(os.Stdout, resp.Body)
+	defer conn.Close()
+
+	err = json.NewEncoder(conn).Encode(&server.Request{
+		Type:    *msgType,
+		Message: strings.Join(args, " "),
+		Monitor: *monitor,
+	})
 	check(err)
+
+	if !*quiet {
+		_, err = io.Copy(os.Stdout, conn)
+		check(err)
+	}
 }
