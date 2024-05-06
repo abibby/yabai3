@@ -14,6 +14,7 @@ import (
 	"github.com/abibby/yabai3/badparser"
 	"github.com/abibby/yabai3/run"
 	"github.com/abibby/yabai3/yabai"
+	"github.com/davecgh/go-spew/spew"
 )
 
 // https://man.archlinux.org/man/extra/i3-wm/i3-msg.1.en
@@ -40,7 +41,7 @@ type CommandResult struct {
 const PORT = 3141
 
 type I3MsgServer struct {
-	server     *http.Server
+	listener   net.Listener
 	changeMode func(mode string) error
 	restart    func() error
 
@@ -55,24 +56,18 @@ func New() *I3MsgServer {
 	}
 }
 
-func (s *I3MsgServer) Start(ctx context.Context, changeMode func(mode string) error, restart func() error) {
-	// mux := http.NewServeMux()
-	// mux.HandleFunc("/command", s.command)
-	// mux.HandleFunc("/get_workspaces", s.getWorkspaces)
-	// mux.HandleFunc("/subscribe", s.subscribe)
-	// s.server = &http.Server{
-	// 	Addr:    fmt.Sprintf(":%d", PORT),
-	// 	Handler: mux,
-	// }
+func (s *I3MsgServer) Start(ctx context.Context, changeMode func(mode string) error, restart func() error) error {
 
 	s.changeMode = changeMode
 	s.restart = restart
 
+	l, err := net.Listen("tcp4", fmt.Sprintf(":%d", PORT))
+	if err != nil {
+		return err
+	}
+	s.listener = l
+
 	go func() {
-		l, err := net.Listen("tcp4", fmt.Sprintf(":%d", PORT))
-		if err != nil {
-			log.Printf("i3-msg server: %v", err)
-		}
 		defer l.Close()
 
 		ctx, cancel := context.WithCancel(ctx)
@@ -82,10 +77,12 @@ func (s *I3MsgServer) Start(ctx context.Context, changeMode func(mode string) er
 			c, err := l.Accept()
 			if err != nil {
 				log.Printf("i3-msg server: accept: %v", err)
+				return
 			}
 			go s.rootHandler(ctx, c)
 		}
 	}()
+	return nil
 }
 
 type Request struct {
@@ -100,7 +97,10 @@ func (r *Request) Context() context.Context {
 }
 
 func (s *I3MsgServer) rootHandler(ctx context.Context, c net.Conn) {
-	defer c.Close()
+	defer func() {
+		spew.Dump(c)
+		c.Close()
+	}()
 
 	r := json.NewDecoder(c)
 	w := json.NewEncoder(c)
@@ -148,7 +148,20 @@ func (s *I3MsgServer) processRequest(w *json.Encoder, r *Request) error {
 }
 
 func (s *I3MsgServer) Close() error {
-	return s.server.Close()
+	errs := []error{}
+	if s.listener != nil {
+		err := s.listener.Close()
+		if err != nil {
+			errs = append(errs, err)
+		}
+	}
+	s.listener = nil
+	s.restart = nil
+	s.changeMode = nil
+	if len(errs) > 0 {
+		return errors.Join(errs...)
+	}
+	return nil
 }
 
 func (s *I3MsgServer) ModeChanged(mode string) {

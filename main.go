@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"time"
 
 	// _ "net/http/pprof"
 
@@ -21,28 +20,23 @@ import (
 	"golang.design/x/hotkey/mainthread"
 )
 
-// type State uint8
-
-// const (
-// 	Running = State(iota)
-// 	Restart
-// 	Stopped
-// )
-
 var (
 	ErrStop    = errors.New("stop")
 	ErrRestart = errors.New("restart")
 )
 
-// func init() {
-// 	go func() {
-// 		http.ListenAndServe(":1234", nil)
-// 	}()
-// }
-
 func main() {
-	// onReady()
-	systray.Run(onReady, onExit)
+	var command string
+	if len(os.Args) >= 2 {
+		command = os.Args[1]
+	}
+
+	switch command {
+	case "yabairc":
+		Yabairc()
+	default:
+		systray.Run(onReady, onExit)
+	}
 }
 
 func onExit() {
@@ -120,12 +114,20 @@ func do(ctx context.Context, cancel context.CancelCauseFunc) error {
 			return fmt.Errorf("faild to restart yabai: %w", err)
 		}
 		log.Print("restarted yabai service")
-		time.Sleep(time.Second * 5)
 		cancel(ErrRestart)
 		return nil
 	}
 
-	i3MsgServer.Start(ctx, changeMode, restart)
+	err = i3MsgServer.Start(ctx, changeMode, restart)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		err := i3MsgServer.Close()
+		if err != nil {
+			log.Printf("failed to unregister bindings: %w", err)
+		}
+	}()
 
 	for _, mode := range modeAST {
 		m := run.NewMode()
@@ -171,10 +173,6 @@ func do(ctx context.Context, cancel context.CancelCauseFunc) error {
 		return fmt.Errorf("failed to unregister bindings: %w", err)
 	}
 
-	err = i3MsgServer.Close()
-	if err != nil {
-		return fmt.Errorf("failed to unregister bindings: %w", err)
-	}
 	return nil
 }
 

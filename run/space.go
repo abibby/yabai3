@@ -93,7 +93,6 @@ func LabelSpace(displayNames []string, name string) error {
 				return nil
 			}
 			if s.Label == "" {
-				fmt.Printf("LabelSpace(%#v, %#v)\n", displayNames, name)
 				return yabai.Yabai("space", fmt.Sprint(spaceIndex), "--label", name)
 			}
 		}

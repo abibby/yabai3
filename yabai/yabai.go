@@ -3,6 +3,7 @@ package yabai
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os/exec"
 	"strings"
 )
@@ -74,6 +75,7 @@ func Yabai(args ...string) error {
 }
 
 func yabaiReturn(v any, args ...string) error {
+	fmt.Printf("yabai -m %s\n", strings.Join(args, " "))
 	b, err := exec.Command("yabai", append([]string{"-m"}, args...)...).CombinedOutput()
 	if err != nil {
 		return errors.New(strings.TrimSpace(string(b)))
