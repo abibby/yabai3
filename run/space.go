@@ -77,25 +77,17 @@ func getDisplayFrom(displayNames []string) (*yabai.Display, error) {
 	return nil, ErrNoDisplay
 }
 
-func LabelSpace(displayNames []string, name string) error {
+func LabelSpace(spaceCache map[int]struct{}, displayNames []string, name string) error {
 	d, err := getDisplayFrom(displayNames)
 	if err != nil {
 		return err
 	}
-	spaces, err := yabai.QuerySpaces()
-	if err != nil {
-		return err
-	}
-
 	for _, spaceIndex := range d.SpaceIndexes {
-		for _, s := range spaces {
-			if s.Label == name {
-				return nil
-			}
-			if s.Label == "" {
-				return yabai.Yabai("space", fmt.Sprint(spaceIndex), "--label", name)
-			}
+		if _, ok := spaceCache[spaceIndex]; ok {
+			continue
 		}
+		spaceCache[spaceIndex] = struct{}{}
+		return yabai.Yabai("space", fmt.Sprint(spaceIndex), "--label", name)
 	}
 	return nil
 }

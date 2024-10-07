@@ -14,7 +14,6 @@ import (
 	"github.com/abibby/yabai3/badparser"
 	"github.com/abibby/yabai3/run"
 	"github.com/abibby/yabai3/yabai"
-	"github.com/davecgh/go-spew/spew"
 )
 
 // https://man.archlinux.org/man/extra/i3-wm/i3-msg.1.en
@@ -45,14 +44,16 @@ type I3MsgServer struct {
 	changeMode func(mode string) error
 	restart    func() error
 
-	modeChangeEventsMtx *sync.Mutex
-	modeChangeEvents    set.Set[chan string]
+	modeChangeEventsMtx      *sync.Mutex
+	modeChangeEvents         set.Set[chan any]
+	workspaceChangeEventsMtx *sync.Mutex
+	workspaceChangeEvents    set.Set[chan any]
 }
 
 func New() *I3MsgServer {
 	return &I3MsgServer{
 		modeChangeEventsMtx: &sync.Mutex{},
-		modeChangeEvents:    set.Set[chan string]{},
+		modeChangeEvents:    set.New[chan any](),
 	}
 }
 
@@ -97,10 +98,7 @@ func (r *Request) Context() context.Context {
 }
 
 func (s *I3MsgServer) rootHandler(ctx context.Context, c net.Conn) {
-	defer func() {
-		spew.Dump(c)
-		c.Close()
-	}()
+	defer c.Close()
 
 	r := json.NewDecoder(c)
 	w := json.NewEncoder(c)
@@ -168,20 +166,60 @@ func (s *I3MsgServer) ModeChanged(mode string) {
 	s.modeChangeEventsMtx.Lock()
 	defer s.modeChangeEventsMtx.Unlock()
 	for e := range s.modeChangeEvents {
-		e <- mode
+		e <- map[string]any{
+			"change":       mode,
+			"pango_markup": false,
+		}
 	}
 }
 
-func (s *I3MsgServer) removeModeChangeEvents(events chan string) {
+type I3MsgWorkspace struct {
+	*Workspace
+	Type string `json:"type"`
+}
+
+type WorkspaceChangeEvent struct {
+	Change  string          `json:"change"`
+	Current *I3MsgWorkspace `json:"current"`
+	Old     *I3MsgWorkspace `json:"old"`
+}
+
+func (s *I3MsgServer) WorkspaceChanged(workspace *Workspace) {
+	s.workspaceChangeEventsMtx.Lock()
+	defer s.workspaceChangeEventsMtx.Unlock()
+	for e := range s.workspaceChangeEvents {
+		e <- &WorkspaceChangeEvent{
+			Change: "focus",
+			Current: &I3MsgWorkspace{
+				Type:      "workspace",
+				Workspace: workspace,
+			},
+		}
+	}
+}
+
+func (s *I3MsgServer) removeModeChangeEvents(events chan any) {
 	s.modeChangeEventsMtx.Lock()
 	defer s.modeChangeEventsMtx.Unlock()
 	s.modeChangeEvents.Delete(events)
 }
 
-func (s *I3MsgServer) addModeChangeEvents(events chan string) {
+func (s *I3MsgServer) addModeChangeEvents(events chan any) {
 	s.modeChangeEventsMtx.Lock()
 	defer s.modeChangeEventsMtx.Unlock()
 	s.modeChangeEvents.Add(events)
+}
+
+func (s *I3MsgServer) removeWorkspaceChangeEvents(events chan any) {
+	s.workspaceChangeEventsMtx.Lock()
+	defer s.workspaceChangeEventsMtx.Unlock()
+	s.workspaceChangeEvents.Delete(events)
+}
+
+func (s *I3MsgServer) addWorkspaceChangeEvents(events chan any) {
+	s.workspaceChangeEventsMtx.Lock()
+	defer s.workspaceChangeEventsMtx.Unlock()
+	s.workspaceChangeEvents.Add(events)
 }
 
 func sendError(w http.ResponseWriter, err error) {
@@ -288,26 +326,26 @@ func (s *I3MsgServer) subscribe(w *json.Encoder, r *Request) error {
 		return fmt.Errorf("i3-msg: subscribe: %w", err)
 	}
 
-	modeChanges := make(chan string)
+	eventChan := make(chan any)
 	for _, e := range events {
 		switch e {
 		case "mode":
-			s.addModeChangeEvents(modeChanges)
-			defer s.removeModeChangeEvents(modeChanges)
+			s.addModeChangeEvents(eventChan)
+			defer s.removeModeChangeEvents(eventChan)
+		case "workspace":
+			s.addWorkspaceChangeEvents(eventChan)
+			defer s.removeWorkspaceChangeEvents(eventChan)
 		}
 	}
 
 	for {
-		log.Print("loop")
+		log.Print("Listening for i3-msg events")
 		select {
 		case <-r.Context().Done():
 			return nil
-		case mode := <-modeChanges:
-			log.Print("mode ", mode)
-			err := w.Encode(map[string]any{
-				"change":       mode,
-				"pango_markup": false,
-			})
+		case event := <-eventChan:
+			log.Printf("event %v", event)
+			err := w.Encode(event)
 			if err != nil {
 				return err
 			}

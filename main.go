@@ -11,11 +11,12 @@ import (
 
 	// _ "net/http/pprof"
 
+	"github.com/abibby/salusa/di"
 	"github.com/abibby/yabai3/badparser"
 	"github.com/abibby/yabai3/bar"
 	"github.com/abibby/yabai3/run"
 	"github.com/abibby/yabai3/server"
-	"github.com/getlantern/systray"
+	"github.com/abibby/yabai3/tray"
 	"golang.design/x/hotkey"
 	"golang.design/x/hotkey/mainthread"
 )
@@ -35,39 +36,56 @@ func main() {
 	case "yabairc":
 		Yabairc()
 	default:
-		systray.Run(onReady, onExit)
+		ctx := di.ContextWithDependencyProvider(
+			context.Background(),
+			di.NewDependencyProvider(),
+		)
+		tray.RegisterVoid(ctx)
+		// tray.RegisterSystray(ctx)
+		tray.Run[*Service](ctx)
 	}
 }
 
-func onExit() {
-	// clean up here
+type Service struct {
+	Tray tray.Tray       `inject:""`
+	Ctx  context.Context `inject:""`
+
+	menuItems []*tray.MenuItem
+	clicks    chan *tray.MenuItem
 }
-func onReady() {
+
+func (s *Service) Bootstrap() error {
 	log.Print("Starting yabai3 0.1.0")
-	systray.SetTitle("yabai3")
-	systray.SetTooltip("yabai3")
-	mQuit := systray.AddMenuItem("Quit", "Quit yabai3")
-	mRestart := systray.AddMenuItem("Restart", "Restart yabai and yabai3")
-	systray.AddSeparator()
+	s.Tray.SetTitle("yabai3")
+	s.Tray.SetTooltip("yabai3")
 
-	ctx := context.Background()
-
-	go mainthread.Init(func() {
+	s.clicks = make(chan *tray.MenuItem)
+	s.menuItems = []*tray.MenuItem{
+		{Title: "Quit", Tooltip: "Quit yabai3", Clicks: s.clicks},
+		{Title: "Restart", Tooltip: "Restart yabai and yabai3", Clicks: s.clicks},
+		{Separator: true},
+	}
+	return nil
+}
+func (s *Service) Run() error {
+	mainthread.Init(func() {
 		cause := ErrRestart
 		for cause == ErrRestart {
-			ctx, cancel := context.WithCancelCause(ctx)
+			ctx, cancel := context.WithCancelCause(s.Ctx)
 			go func() {
 				select {
 				case <-ctx.Done():
 					return
-				case <-mQuit.ClickedCh:
-					cancel(ErrStop)
-				case <-mRestart.ClickedCh:
-					cancel(ErrRestart)
+				case m := <-s.clicks:
+					if m.Title == "Quit" {
+						cancel(ErrStop)
+					} else if m.Title == "Restart" {
+						cancel(ErrRestart)
+					}
 				}
 
 			}()
-			err := do(ctx, cancel)
+			err := s.do(ctx, cancel)
 			if err != nil {
 				panic(err)
 			}
@@ -77,9 +95,10 @@ func onReady() {
 			panic(cause)
 		}
 	})
+	return nil
 }
 
-func do(ctx context.Context, cancel context.CancelCauseFunc) error {
+func (s *Service) do(ctx context.Context, cancel context.CancelCauseFunc) error {
 	log.Print("starting yabai3")
 	var modeAST []*badparser.Mode
 	var err error
@@ -125,7 +144,7 @@ func do(ctx context.Context, cancel context.CancelCauseFunc) error {
 	defer func() {
 		err := i3MsgServer.Close()
 		if err != nil {
-			log.Printf("failed to unregister bindings: %w", err)
+			log.Printf("failed to unregister bindings: %v", err)
 		}
 	}()
 
@@ -143,21 +162,14 @@ func do(ctx context.Context, cancel context.CancelCauseFunc) error {
 				}
 			})
 		}
-		modes[mode.Name] = m
 
 		if mode.Name == "default" {
-			for _, w := range mode.Workspaces {
-				err := run.LabelSpace(w.DisplayIndexes, w.WorkspaceName)
-				if err != nil {
-					log.Print(err)
-				}
-			}
-			err := run.SetGaps(mode.Borders.Inner, mode.Borders.Outer)
-			if err != nil {
-				log.Print(err)
-			}
-			go bar.Run(ctx, mode.Bar.StatusCommand)
+			go bar.Run(ctx, mode.Bar.StatusCommand, s.menuItems)
+
+			m.SetStartup(mode.Exec)
+			m.SetStartupAlways(mode.ExecAlways)
 		}
+		modes[mode.Name] = m
 	}
 
 	err = modes[activeMode].Register()

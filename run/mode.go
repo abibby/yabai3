@@ -3,13 +3,18 @@ package run
 import (
 	"errors"
 	"fmt"
+	"log"
+	"os"
+	"os/exec"
 
 	"golang.design/x/hotkey"
 )
 
 type Mode struct {
-	hotkeys   []*hotkey.Hotkey
-	callbacks map[*hotkey.Hotkey]func(hotkey.Event)
+	hotkeys       []*hotkey.Hotkey
+	callbacks     map[*hotkey.Hotkey]func(hotkey.Event)
+	startup       []string
+	startupAlways []string
 }
 
 func NewMode() *Mode {
@@ -23,6 +28,12 @@ func (m *Mode) AddHotKey(mods []hotkey.Modifier, key hotkey.Key, callback func(e
 	hk := hotkey.New(mods, key)
 	m.callbacks[hk] = callback
 	m.hotkeys = append(m.hotkeys, hk)
+}
+func (m *Mode) SetStartup(s []string) {
+	m.startup = s
+}
+func (m *Mode) SetStartupAlways(s []string) {
+	m.startupAlways = s
 }
 
 func (m *Mode) Register() error {
@@ -44,6 +55,18 @@ func (m *Mode) Register() error {
 			}
 		}(hk)
 	}
+
+	shell := os.Getenv("SHELL")
+	if shell == "" {
+		shell = "sh"
+	}
+	for _, s := range m.startupAlways {
+		err := exec.Command(shell, "-c", s).Run()
+		if err != nil {
+			log.Printf("exec_always failed: %s: %v", s, err)
+		}
+	}
+
 	return nil
 }
 

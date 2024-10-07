@@ -23,17 +23,13 @@ func Yabairc() {
 	if defaultMode == nil {
 		log.Fatal("no default mode")
 	}
-	// yabai -m signal --add event=dock_did_restart action="sudo yabai --load-sa"
-	// sudo yabai --load-sa
-	// yabai -m config layout bsp
-
 	err = yabai.Yabai("config", "layout", "bsp")
 	if err != nil {
 		log.Print(err)
 	}
-
+	spaceCache := map[int]struct{}{}
 	for _, w := range defaultMode.Workspaces {
-		err := run.LabelSpace(w.DisplayIndexes, w.WorkspaceName)
+		err := run.LabelSpace(spaceCache, w.DisplayIndexes, w.WorkspaceName)
 		if err != nil {
 			log.Print(err)
 		}

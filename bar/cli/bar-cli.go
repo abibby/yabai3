@@ -18,5 +18,8 @@ func main() {
 			fmt.Println(b.String())
 		}
 	}()
-	cmd.Wait()
+	err := cmd.Wait()
+	if err != nil {
+		panic(err)
+	}
 }

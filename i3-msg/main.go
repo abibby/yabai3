@@ -39,7 +39,7 @@ func main() {
 	pflag.Parse()
 
 	args := pflag.Args()
-	if len(args) == 0 {
+	if (*msgType) == "command" && len(args) == 0 {
 		fmt.Println("i3-msg <command...>")
 		return
 	}

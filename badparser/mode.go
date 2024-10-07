@@ -3,6 +3,9 @@ package badparser
 import (
 	"log"
 	"strconv"
+	"strings"
+
+	"github.com/abibby/salusa/slices"
 )
 
 type Mode struct {
@@ -11,6 +14,8 @@ type Mode struct {
 	Workspaces []*Workspace
 	Borders    *Borders
 	Bar        *Bar
+	Exec       []string
+	ExecAlways []string
 }
 
 type BindSym struct {
@@ -37,6 +42,9 @@ func parseModes(modeLines map[string][]string) []*Mode {
 		bindSym := []*BindSym{}
 		windows := []*Workspace{}
 		borders := &Borders{}
+		execs := []string{}
+		execAlways := []string{}
+
 		var bar *Bar
 		for _, line := range lines {
 			tokens := TokenizeLine(line)
@@ -69,6 +77,18 @@ func parseModes(modeLines map[string][]string) []*Mode {
 				}
 			case "status_command":
 				bar = &Bar{StatusCommand: tokens[1]}
+				// exec_always
+			case "exec", "exec_always":
+				command := slices.Filter(tokens[1:], func(s string) bool {
+					return !strings.HasPrefix(s, "--")
+				})
+				if len(command) != 1 {
+					log.Printf("invalid command %v", command)
+				} else if tokens[0] == "exec" {
+					execs = append(execs, tokens[len(tokens)-1])
+				} else {
+					execAlways = append(execAlways, tokens[len(tokens)-1])
+				}
 			}
 		}
 		modes = append(modes, &Mode{
@@ -77,6 +97,8 @@ func parseModes(modeLines map[string][]string) []*Mode {
 			Workspaces: windows,
 			Borders:    borders,
 			Bar:        bar,
+			Exec:       execs,
+			ExecAlways: execAlways,
 		})
 	}
 	return modes

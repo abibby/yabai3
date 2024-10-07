@@ -15,11 +15,11 @@ func main() {
 		log.Fatal(err)
 	}
 
-	bYabai, err := exec.Command("which", "yabai").Output()
+	yabaiExe, err := exec.Command("which", "yabai").Output()
 	if err != nil {
 		log.Fatal(err)
 	}
-	yabai, _ := strings.CutSuffix(string(bYabai), "\n")
+	yabai := strings.TrimSuffix(string(yabaiExe), "\n")
 
 	bSha, err := exec.Command("shasum", "-a", "256", yabai).Output()
 	if err != nil {

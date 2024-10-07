@@ -11,7 +11,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/getlantern/systray"
+	"github.com/abibby/salusa/di"
+	"github.com/abibby/yabai3/tray"
 	"github.com/microcosm-cc/bluemonday"
 )
 
@@ -80,9 +81,11 @@ type Click struct {
 	Height    int         `json:"height"`
 }
 
-var menuItems = []*systray.MenuItem{}
-
-func Run(ctx context.Context, command string) {
+func Run(ctx context.Context, command string, globalMenuItems []*tray.MenuItem) {
+	t, err := di.Resolve[tray.Tray](ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
 	stdin, stdout, cmd := StartCommand(ctx, command)
 	defer stdin.Close()
 	defer stdout.Close()
@@ -100,10 +103,10 @@ func Run(ctx context.Context, command string) {
 
 	lastStatus := ""
 
-	clicks := make(chan int)
+	clicks := make(chan *tray.MenuItem)
 	updates := Process(stdout)
 
-	_, err := stdin.Write([]byte("[\n"))
+	_, err = stdin.Write([]byte("[\n"))
 	if err != nil {
 		log.Printf("failed to write click header: %v", err)
 		return
@@ -114,45 +117,40 @@ func Run(ctx context.Context, command string) {
 		select {
 		case <-ctx.Done():
 			return
-		case clickIndex := <-clicks:
-			err = doClick(bar[clickIndex], stdin)
+		case clicked := <-clicks:
+			i := slices.Index(globalMenuItems, clicked)
+			if i == -1 {
+				continue
+			}
+			err = doClick(bar[i], stdin)
 			if err != nil {
 				log.Print(err)
 			}
 		case bar = <-updates:
-			status := barUpdate(bar, clicks)
+			status := barUpdate(t, bar, globalMenuItems, clicks)
 			if lastStatus != status {
 				log.Printf("bar update %s\n", status)
-				systray.SetTitle(status)
+				t.SetTitle(status)
 				lastStatus = status
 			}
 		}
 	}
 }
 
-func barUpdate(bar Bar, clicks chan int) string {
+func barUpdate(t tray.Tray, bar Bar, globalMenuItems []*tray.MenuItem, clicks chan *tray.MenuItem) string {
 	activeSections := bar.ActiveSections()
-	for i, section := range activeSections {
-		title := section.String()
-		tooltip := section.Name
-		if len(menuItems) <= i {
-			m := systray.AddMenuItem(title, tooltip)
-			go func(menuIndex int) {
-				for {
-					<-m.ClickedCh
-					clicks <- menuIndex
-				}
-			}(i)
-			menuItems = append(menuItems, m)
-		} else {
-			menuItems[i].Enable()
-			menuItems[i].SetTitle(title)
-			menuItems[i].SetTooltip(tooltip)
-		}
+	offset := len(globalMenuItems)
+	items := make([]*tray.MenuItem, offset, offset+len(activeSections))
+	copy(items, globalMenuItems)
+	for _, section := range activeSections {
+		items = append(items, &tray.MenuItem{
+			Title:   section.String(),
+			Tooltip: section.Name,
+			Clicks:  clicks,
+		})
 	}
-	for i := len(activeSections); i < len(menuItems); i++ {
-		menuItems[i].Disable()
-	}
+
+	t.SetMenuItems(items)
 
 	return bar.String()
 }
